@@ -210,10 +210,10 @@ def toggle_task(task_id):
     for task in tasks:
         if task['id'] == task_id:
             # BUG #7: Wrong comparison (should be not completed)
-            task['completed'] = task['completed']  # Always stays same!
+            task['completed'] = not task['completed']  # Toggles status
             
             # BUG #8: String comparison case sensitivity issue
-            if task['title'].lower() == 'IMPORTANT':  # This will rarely match
+            if task['title'].lower() == 'important':  # Now matches correctly
                 send_notification(task)
             
             return jsonify({'status': 'toggled'})
