@@ -191,6 +191,8 @@ def handle_tasks():
         task_counter += 1
     
     page = request.args.get('page', 1, type=int)
+    if page < 1:
+        page = 1
     
     # BUG #5: Off-by-one error in pagination (should be page - 1)
     start = (page - 1) * 5
