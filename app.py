@@ -22,28 +22,309 @@ HTML_TEMPLATE = """
 <head>
     <title>Task Manager</title>
     <style>
-        body { font-family: Arial; margin: 20px; }
-        .task { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
-        .completed { color: gray; text-decoration: line-through; }
-        input, button { padding: 5px; margin: 5px; }
+        :root {
+            color-scheme: dark;
+            --bg1: #0f172a;
+            --bg2: #111827;
+            --card: rgba(15, 23, 42, 0.72);
+            --border: rgba(148, 163, 184, 0.18);
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --accent: #7c3aed;
+            --accent2: #06b6d4;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(124, 58, 237, 0.28), transparent 30%),
+                radial-gradient(circle at top right, rgba(6, 182, 212, 0.18), transparent 35%),
+                linear-gradient(180deg, var(--bg1), var(--bg2));
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 32px 18px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 35%, rgba(255,255,255,0.03));
+            opacity: 0.65;
+        }
+
+        .app-shell {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1, h2 {
+            letter-spacing: -0.03em;
+            margin: 0 0 16px;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--muted);
+            margin-top: 24px;
+        }
+
+        .subtle {
+            color: var(--muted);
+            margin-top: 6px;
+            margin-bottom: 24px;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(14px);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+        }
+
+        .toolbar,
+        .pagination,
+        form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        input, button {
+            font: inherit;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            color: var(--text);
+            border-radius: 14px;
+            padding: 12px 14px;
+            outline: none;
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        input[type="text"]::placeholder {
+            color: #64748b;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: rgba(124, 58, 237, 0.9);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
+            transform: translateY(-1px);
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            color: white;
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.22);
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease, opacity 160ms ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.06);
+            box-shadow: 0 14px 24px rgba(79, 70, 229, 0.28);
+        }
+
+        button:active {
+            transform: translateY(1px) scale(0.99);
+            box-shadow: 0 6px 14px rgba(79, 70, 229, 0.2);
+        }
+
+        .secondary {
+            background: rgba(30, 41, 59, 0.9);
+            box-shadow: none;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+        }
+
+        .danger {
+            background: linear-gradient(135deg, var(--danger), #b91c1c);
+        }
+
+        #tasks {
+            display: grid;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .task {
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.72);
+            padding: 14px 16px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+        }
+
+        .task:hover {
+            transform: translateY(-2px);
+            border-color: rgba(124, 58, 237, 0.35);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
+            background: rgba(17, 24, 39, 0.92);
+        }
+
+        .task strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .task-meta {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .completed {
+            opacity: 0.7;
+        }
+
+        .completed strong {
+            text-decoration: line-through;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .task-actions button {
+            padding: 10px 14px;
+            border-radius: 12px;
+        }
+
+        .task-actions .secondary {
+            background: rgba(51, 65, 85, 0.9);
+        }
+
+        .task-actions .danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .welcome {
+            margin: 0;
+        }
+
+        .pagination {
+            margin-top: 18px;
+        }
+
+        .pagination button {
+            min-width: 112px;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 18px 12px;
+            }
+
+            .panel {
+                padding: 18px;
+                border-radius: 18px;
+            }
+
+            h1 {
+                font-size: 1.9rem;
+            }
+
+            .task {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .task-actions {
+                width: 100%;
+            }
+
+            .task-actions button,
+            .pagination button,
+            .toolbar button,
+            form button {
+                width: 100%;
+            }
+
+            .toolbar,
+            .pagination,
+            form {
+                width: 100%;
+            }
+
+            input[type="text"],
+            input[type="number"] {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Task Manager {{ user }}</h1>
-    
-    <div>
-        <input type="text" id="taskInput" placeholder="Enter task">
-        <input type="number" id="priority" placeholder="Priority (1-5)" min="1" max="5">
-        <button onclick="addTask()">Add Task</button>
-        <button onclick="logout()">Logout</button>
-    </div>
-    
-    <h2>Tasks (Page {{ page }})</h2>
-    <div id="tasks"></div>
-    
-    <div>
-        <button onclick="prevPage()">Previous</button>
-        <button onclick="nextPage()">Next</button>
+    <div class="app-shell">
+        <div class="topbar">
+            <div>
+                <h1>Task Manager {{ user }}</h1>
+                <p class="subtle">A cleaner way to keep track of what matters.</p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="toolbar">
+                <input type="text" id="taskInput" placeholder="Enter task">
+                <input type="number" id="priority" placeholder="Priority (1-5)" min="1" max="5">
+                <button onclick="addTask()">Add Task</button>
+                <button class="secondary" onclick="logout()">Logout</button>
+            </div>
+            
+            <h2>Tasks (Page {{ page }})</h2>
+            <div id="tasks"></div>
+            
+            <div class="pagination">
+                <button class="secondary" onclick="prevPage()">Previous</button>
+                <button class="secondary" onclick="nextPage()">Next</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -57,9 +338,14 @@ HTML_TEMPLATE = """
                 let div = document.createElement('div');
                 div.className = 'task' + (t.completed ? ' completed' : '');
                 div.innerHTML = `
-                    <strong>${t.title}</strong> (Priority: ${t.priority}) 
-                    <button onclick="toggleTask(${t.id})">Toggle</button>
-                    <button onclick="deleteTask(${t.id})">Delete</button>
+                    <div>
+                        <strong>${t.title}</strong>
+                        <div class="task-meta">Priority: ${t.priority}</div>
+                    </div>
+                    <div class="task-actions">
+                        <button onclick="toggleTask(${t.id})">Toggle</button>
+                        <button class="danger" onclick="deleteTask(${t.id})">Delete</button>
+                    </div>
                 `;
                 document.getElementById('tasks').appendChild(div);
             });
@@ -116,18 +402,127 @@ LOGIN_TEMPLATE = """
 <head>
     <title>Login</title>
     <style>
-        body { font-family: Arial; margin: 50px; }
-        input, button { padding: 8px; margin: 5px; }
+        :root {
+            color-scheme: dark;
+            --bg1: #0f172a;
+            --bg2: #111827;
+            --card: rgba(15, 23, 42, 0.72);
+            --border: rgba(148, 163, 184, 0.18);
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --accent: #7c3aed;
+            --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(124, 58, 237, 0.28), transparent 30%),
+                radial-gradient(circle at top right, rgba(6, 182, 212, 0.18), transparent 35%),
+                linear-gradient(180deg, var(--bg1), var(--bg2));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(14px);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0 0 18px;
+            letter-spacing: -0.03em;
+            font-size: 2rem;
+        }
+
+        p {
+            color: var(--muted);
+            margin-top: 16px;
+            margin-bottom: 0;
+        }
+
+        form {
+            display: grid;
+            gap: 10px;
+        }
+
+        input, button {
+            font: inherit;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            color: var(--text);
+            border-radius: 14px;
+            padding: 12px 14px;
+            outline: none;
+            transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+        }
+
+        input[type="text"]::placeholder,
+        input[type="password"]::placeholder {
+            color: #64748b;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: rgba(124, 58, 237, 0.9);
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
+            transform: translateY(-1px);
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            color: white;
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.22);
+            transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.06);
+            box-shadow: 0 14px 24px rgba(79, 70, 229, 0.28);
+        }
+
+        button:active {
+            transform: translateY(1px) scale(0.99);
+        }
     </style>
 </head>
 <body>
-    <h1>Task Manager Login</h1>
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-    </form>
-    <p>Username: admin | Password: password123</p>
+    <div class="login-card">
+        <h1>Task Manager Login</h1>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p>Username: admin | Password: password123</p>
+    </div>
 </body>
 </html>
 """
