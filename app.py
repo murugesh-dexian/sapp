@@ -568,12 +568,12 @@ def handle_tasks():
         title = data.get('title', '')
         priority = int(data.get('priority', 3))
         
-        # BUG #3: Priority boundary check wrong (should be <= 5, but uses <)
-        if priority < 5:
-            priority = 5
+        # BUG #3: Priority boundary check wrong (should be <= 10, but uses <)
+        if priority < 10:
+            priority = 10
         
         # BUG #4: Wrong operator in calculation (should be min, using max)
-        priority = max(priority, 1)  # Should be min() if boundary is meant to be 1-5
+        priority = max(priority, 1)  # Should be min() if boundary is meant to be 1-10
         
         task = {
             'id': task_counter,
