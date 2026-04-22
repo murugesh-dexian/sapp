@@ -571,7 +571,7 @@ def handle_tasks():
         priority = int(data.get('priority', 3))
         
         # BUG #3: Priority boundary check wrong (should be <= 10, but uses <)
-        if priority < 10:
+        if priority > 10:
             priority = 10
         
         # BUG #4: Wrong operator in calculation (should be min, using max)
