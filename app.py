@@ -568,8 +568,8 @@ def handle_tasks():
         title = data.get('title', '')
         priority = int(data.get('priority', 3))
         
-        # BUG #3: Priority boundary check wrong (should be <= 5, but uses <)
-        if priority < 5:
+        # FIX: Correct priority capping for values 6 and above
+        if priority >= 6:
             priority = 5
         
         # BUG #4: Wrong operator in calculation (should be min, using max)
