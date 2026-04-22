@@ -386,7 +386,7 @@ HTML_TEMPLATE = """
         }
         
         function prevPage() {
-            if (currentPage > 0) currentPage--;
+            if (currentPage > 1) currentPage--;
             loadTasks();
         }
         
