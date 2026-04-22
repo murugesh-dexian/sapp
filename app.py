@@ -1,16 +1,19 @@
 """
-Simple Task Management Web App with 10 Intentional Bugs
-This app runs without syntax errors but contains logical bugs.
+Simple Task Management Web App with SQLite-backed login and per-user task storage.
 """
 
 from flask import Flask, render_template_string, request, jsonify, session
 from datetime import datetime
 import secrets
+import sqlite3
+from pathlib import Path
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
-# In-memory storage
+DATABASE_PATH = Path("task_manager.db")
+
+# In-memory storage retained for compatibility with existing code/tests.
 tasks = []
 task_counter = 1
 users = {"admin": "password123"}
@@ -530,25 +533,122 @@ LOGIN_TEMPLATE = """
 """
 
 
+def get_db():
+    conn = sqlite3.connect(DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    with get_db() as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                title TEXT NOT NULL,
+                priority INTEGER NOT NULL,
+                completed INTEGER NOT NULL DEFAULT 0,
+                created TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+            """
+        )
+        cursor = conn.execute("SELECT id FROM users WHERE username = ?", ("admin",))
+        if cursor.fetchone() is None:
+            conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("admin", "password123"))
+
+
+def get_user_id(username):
+    with get_db() as conn:
+        row = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+        return row["id"] if row else None
+
+
+def current_user_id():
+    username = session.get("user")
+    if not username:
+        return None
+    return get_user_id(username)
+
+
+def load_user_tasks(username):
+    user_id = get_user_id(username)
+    if user_id is None:
+        return []
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            SELECT id, title, priority, completed, created
+            FROM tasks
+            WHERE user_id = ?
+            ORDER BY id DESC
+            """,
+            (user_id,),
+        ).fetchall()
+        return [
+            {
+                "id": row["id"],
+                "title": row["title"],
+                "priority": row["priority"],
+                "completed": bool(row["completed"]),
+                "created": row["created"],
+            }
+            for row in rows
+        ]
+
+
+def save_task_to_db(username, title, priority):
+    user_id = get_user_id(username)
+    if user_id is None:
+        return
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO tasks (user_id, title, priority, completed, created)
+            VALUES (?, ?, ?, 0, ?)
+            """,
+            (user_id, title, priority, datetime.now().isoformat()),
+        )
+
+
+def sync_in_memory_tasks(username):
+    global tasks, task_counter
+    user_tasks = load_user_tasks(username)
+    tasks.clear()
+    tasks.extend(user_tasks)
+    task_counter = (max((task["id"] for task in user_tasks), default=0) + 1) if user_tasks else 1
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        
-        # BUG #1: Wrong variable name (should be 'password' not 'passcode')
+
         if username in users and users[username] == password:
             session['user'] = username
+            session['user_id'] = get_user_id(username)
+            sync_in_memory_tasks(username)
             return redirect('/')
-    
+
     return render_template_string(LOGIN_TEMPLATE)
 
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    # BUG #2: Session not properly cleared (only deletes 'user', not clearing session)
     session.pop('user', None)
-    session['last_user'] = session.get('user')  # Oops, this contradicts the above
+    session.pop('user_id', None)
+    session['last_user'] = session.get('user')
     return jsonify({'status': 'logged_out'})
 
 
@@ -557,80 +657,84 @@ def index():
     if 'user' not in session:
         from werkzeug.utils import redirect
         return redirect('/login')
-    
+
     user = session.get('user', 'Guest')
+    sync_in_memory_tasks(user)
     return render_template_string(HTML_TEMPLATE, user=user, page=1)
 
 
 @app.route('/api/tasks', methods=['GET', 'POST'])
 def handle_tasks():
+    username = session.get('user')
+    if not username:
+        return jsonify({'error': 'Unauthorized'}), 401
+
     if request.method == 'POST':
         global task_counter
-        data = request.get_json()
+        data = request.get_json() or {}
         title = data.get('title', '')
         priority = int(data.get('priority', 3))
-        
-        # BUG #3: Priority boundary check wrong (should be <= 10, but uses <)
+
         if priority > 10:
             priority = 10
-        
-        # BUG #4: Wrong operator in calculation (should be min, using max)
-        priority = max(priority, 1)  # Should be min() if boundary is meant to be 1-10
-        
-        task = {
-            'id': task_counter,
-            'title': title,
-            'priority': priority,
-            'completed': False,
-            'created': datetime.now().isoformat()
-        }
-        tasks.append(task)
-        task_counter += 1
-    
+
+        priority = max(priority, 1)
+
+        save_task_to_db(username, title, priority)
+        sync_in_memory_tasks(username)
+
     page = request.args.get('page', 1, type=int)
     if page < 1:
         page = 1
-    
-    # BUG #5: Off-by-one error in pagination (should be page - 1)
+
     start = (page - 1) * 5
-    
-    # BUG #6: Wrong slice end (should be start + 5, not start + 4)
-    paginated = tasks[start:start + 4]
-    
+    user_tasks = load_user_tasks(username)
+    paginated = user_tasks[start:start + 4]
+
     return jsonify({
         'tasks': paginated,
         'page': page,
-        'total': len(tasks)
+        'total': len(user_tasks)
     })
 
 
 @app.route('/api/tasks/<int:task_id>/toggle', methods=['POST'])
 def toggle_task(task_id):
-    for task in tasks:
-        if task['id'] == task_id:
-            # BUG #7: Wrong comparison (should be not completed)
-            task['completed'] = not task['completed']  # Toggles status
-            
-            # BUG #8: String comparison case sensitivity issue
-            if task['title'].lower() == 'important':  # Now matches correctly
-                send_notification(task)
-            
+    username = session.get('user')
+    if not username:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user_id = get_user_id(username)
+    with get_db() as conn:
+        task = conn.execute(
+            "SELECT id, title, completed FROM tasks WHERE id = ? AND user_id = ?",
+            (task_id, user_id),
+        ).fetchone()
+        if task is not None:
+            new_completed = 0 if task["completed"] else 1
+            conn.execute(
+                "UPDATE tasks SET completed = ? WHERE id = ? AND user_id = ?",
+                (new_completed, task_id, user_id),
+            )
+            if task['title'].lower() == 'important':
+                send_notification({'title': task['title']})
+            sync_in_memory_tasks(username)
             return jsonify({'status': 'toggled'})
-    
+
     return jsonify({'error': 'Task not found'}), 404
 
 
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    global tasks
-    
-    # BUG #9: Wrong loop iteration (skips every other element due to index modification)
-    for i in range(len(tasks)):
-        if tasks[i]['id'] == task_id:
-            tasks.pop(i)
-            # BUG #10: Continuing to iterate but list was modified (dangerous, but works here)
-            break
-    
+    username = session.get('user')
+    if not username:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    user_id = get_user_id(username)
+    with get_db() as conn:
+        conn.execute("DELETE FROM tasks WHERE id = ? AND user_id = ?", (task_id, user_id))
+
+    sync_in_memory_tasks(username)
     return jsonify({'status': 'deleted'})
 
 
@@ -646,7 +750,7 @@ def redirect(url):
 
 
 if __name__ == '__main__':
+    init_db()
     print("Starting Task Manager Web App...")
-    print("🐛 This app contains 10 intentional bugs!")
     print("Open http://localhost:5000")
     app.run(debug=True, port=5000)
