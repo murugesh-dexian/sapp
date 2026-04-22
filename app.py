@@ -24,17 +24,17 @@ HTML_TEMPLATE = """
     <style>
         :root {
             color-scheme: dark;
-            --bg1: #0f172a;
-            --bg2: #111827;
-            --card: rgba(15, 23, 42, 0.72);
-            --border: rgba(148, 163, 184, 0.18);
-            --text: #e5e7eb;
-            --muted: #94a3b8;
-            --accent: #7c3aed;
-            --accent2: #06b6d4;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            --bg1: #0b0a08;
+            --bg2: #17120a;
+            --card: rgba(20, 16, 8, 0.78);
+            --border: rgba(212, 175, 55, 0.2);
+            --text: #f8e7b2;
+            --muted: #c9b46a;
+            --accent: #d4af37;
+            --accent2: #f0c75e;
+            --danger: #b45309;
+            --success: #f59e0b;
+            --shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
         }
 
         * {
@@ -47,8 +47,8 @@ HTML_TEMPLATE = """
             min-height: 100vh;
             color: var(--text);
             background:
-                radial-gradient(circle at top left, rgba(124, 58, 237, 0.28), transparent 30%),
-                radial-gradient(circle at top right, rgba(6, 182, 212, 0.18), transparent 35%),
+                radial-gradient(circle at top left, rgba(212, 175, 55, 0.22), transparent 30%),
+                radial-gradient(circle at top right, rgba(240, 199, 94, 0.14), transparent 35%),
                 linear-gradient(180deg, var(--bg1), var(--bg2));
             display: flex;
             justify-content: center;
@@ -61,7 +61,7 @@ HTML_TEMPLATE = """
             position: fixed;
             inset: 0;
             pointer-events: none;
-            background: linear-gradient(120deg, rgba(255,255,255,0.04), transparent 35%, rgba(255,255,255,0.03));
+            background: linear-gradient(120deg, rgba(255,255,255,0.03), transparent 35%, rgba(255,255,255,0.02));
             opacity: 0.65;
         }
 
@@ -120,8 +120,8 @@ HTML_TEMPLATE = """
 
         input[type="text"],
         input[type="number"] {
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.22);
+            background: rgba(20, 16, 8, 0.75);
+            border: 1px solid rgba(212, 175, 55, 0.25);
             color: var(--text);
             border-radius: 14px;
             padding: 12px 14px;
@@ -130,48 +130,50 @@ HTML_TEMPLATE = """
         }
 
         input[type="text"]::placeholder {
-            color: #64748b;
+            color: #8c7b42;
         }
 
         input[type="text"]:focus,
         input[type="number"]:focus {
-            border-color: rgba(124, 58, 237, 0.9);
-            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
+            border-color: rgba(212, 175, 55, 0.95);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
             transform: translateY(-1px);
         }
 
         button {
             appearance: none;
             border: 0;
-            color: white;
-            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            color: #1a1407;
+            background: linear-gradient(135deg, var(--accent), #f0c75e);
             border-radius: 14px;
             padding: 12px 16px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.22);
+            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
             transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease, opacity 160ms ease;
         }
 
         button:hover {
             transform: translateY(-2px);
             filter: brightness(1.06);
-            box-shadow: 0 14px 24px rgba(79, 70, 229, 0.28);
+            box-shadow: 0 14px 24px rgba(212, 175, 55, 0.26);
         }
 
         button:active {
             transform: translateY(1px) scale(0.99);
-            box-shadow: 0 6px 14px rgba(79, 70, 229, 0.2);
+            box-shadow: 0 6px 14px rgba(212, 175, 55, 0.18);
         }
 
         .secondary {
-            background: rgba(30, 41, 59, 0.9);
+            background: rgba(32, 24, 12, 0.92);
+            color: var(--text);
             box-shadow: none;
-            border: 1px solid rgba(148, 163, 184, 0.16);
+            border: 1px solid rgba(212, 175, 55, 0.18);
         }
 
         .danger {
-            background: linear-gradient(135deg, var(--danger), #b91c1c);
+            background: linear-gradient(135deg, #b45309, #7c2d12);
+            color: #fff7d6;
         }
 
         #tasks {
@@ -181,8 +183,8 @@ HTML_TEMPLATE = """
         }
 
         .task {
-            border: 1px solid rgba(148, 163, 184, 0.16);
-            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(212, 175, 55, 0.16);
+            background: rgba(20, 16, 8, 0.78);
             padding: 14px 16px;
             border-radius: 16px;
             display: flex;
@@ -194,9 +196,9 @@ HTML_TEMPLATE = """
 
         .task:hover {
             transform: translateY(-2px);
-            border-color: rgba(124, 58, 237, 0.35);
+            border-color: rgba(212, 175, 55, 0.38);
             box-shadow: 0 12px 26px rgba(0, 0, 0, 0.24);
-            background: rgba(17, 24, 39, 0.92);
+            background: rgba(28, 22, 11, 0.95);
         }
 
         .task strong {
@@ -229,11 +231,11 @@ HTML_TEMPLATE = """
         }
 
         .task-actions .secondary {
-            background: rgba(51, 65, 85, 0.9);
+            background: rgba(45, 34, 17, 0.92);
         }
 
         .task-actions .danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
+            background: linear-gradient(135deg, #b45309, #92400e);
         }
 
         .topbar {
@@ -386,7 +388,7 @@ HTML_TEMPLATE = """
         }
         
         function prevPage() {
-            if (currentPage > 0) currentPage--;
+            if (currentPage > 1) currentPage--;
             loadTasks();
         }
         
@@ -404,14 +406,14 @@ LOGIN_TEMPLATE = """
     <style>
         :root {
             color-scheme: dark;
-            --bg1: #0f172a;
-            --bg2: #111827;
-            --card: rgba(15, 23, 42, 0.72);
-            --border: rgba(148, 163, 184, 0.18);
-            --text: #e5e7eb;
-            --muted: #94a3b8;
-            --accent: #7c3aed;
-            --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+            --bg1: #0b0a08;
+            --bg2: #17120a;
+            --card: rgba(20, 16, 8, 0.78);
+            --border: rgba(212, 175, 55, 0.2);
+            --text: #f8e7b2;
+            --muted: #c9b46a;
+            --accent: #d4af37;
+            --shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
         }
 
         * {
@@ -424,8 +426,8 @@ LOGIN_TEMPLATE = """
             min-height: 100vh;
             color: var(--text);
             background:
-                radial-gradient(circle at top left, rgba(124, 58, 237, 0.28), transparent 30%),
-                radial-gradient(circle at top right, rgba(6, 182, 212, 0.18), transparent 35%),
+                radial-gradient(circle at top left, rgba(212, 175, 55, 0.22), transparent 30%),
+                radial-gradient(circle at top right, rgba(240, 199, 94, 0.14), transparent 35%),
                 linear-gradient(180deg, var(--bg1), var(--bg2));
             display: flex;
             justify-content: center;
@@ -468,8 +470,8 @@ LOGIN_TEMPLATE = """
         input[type="text"],
         input[type="password"] {
             width: 100%;
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid rgba(148, 163, 184, 0.22);
+            background: rgba(20, 16, 8, 0.75);
+            border: 1px solid rgba(212, 175, 55, 0.25);
             color: var(--text);
             border-radius: 14px;
             padding: 12px 14px;
@@ -479,33 +481,33 @@ LOGIN_TEMPLATE = """
 
         input[type="text"]::placeholder,
         input[type="password"]::placeholder {
-            color: #64748b;
+            color: #8c7b42;
         }
 
         input[type="text"]:focus,
         input[type="password"]:focus {
-            border-color: rgba(124, 58, 237, 0.9);
-            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.18);
+            border-color: rgba(212, 175, 55, 0.95);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.16);
             transform: translateY(-1px);
         }
 
         button {
             appearance: none;
             border: 0;
-            color: white;
-            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            color: #1a1407;
+            background: linear-gradient(135deg, var(--accent), #f0c75e);
             border-radius: 14px;
             padding: 12px 16px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.22);
+            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
             transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
         }
 
         button:hover {
             transform: translateY(-2px);
             filter: brightness(1.06);
-            box-shadow: 0 14px 24px rgba(79, 70, 229, 0.28);
+            box-shadow: 0 14px 24px rgba(212, 175, 55, 0.26);
         }
 
         button:active {
@@ -586,6 +588,8 @@ def handle_tasks():
         task_counter += 1
     
     page = request.args.get('page', 1, type=int)
+    if page < 1:
+        page = 1
     
     # BUG #5: Off-by-one error in pagination (should be page - 1)
     start = (page - 1) * 5
